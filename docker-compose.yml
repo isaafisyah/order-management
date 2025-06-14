@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: order-management
+    image: order-management-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    depends_on:
+      - order-management-db
+    environment:
+      APP_NAME: order-management
+      APP_ENV: Development
+      APP_PORT: 9090
+      APP_SECRET_KEY: zmQF1U9WZWwPoL5XkKJOFzJXQWjImhDG
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: order-management-db
+      DB_PORT: 5432
+      DB_NAME: order_management
+      DB_DRIVER: postgres
+
+  order-management-db:
+    container_name: order-management-postgres
+    image: postgres:16.3-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: order_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./app/database/migrations:/migrations
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "-database postgres://postgres:password@order-management-db:5432/order_management?sslmode=disable",
+        "up",
+      ]
+    depends_on:
+      - order-management-db
+
+  migrate-down:
+    image: migrate/migrate
+    volumes:
+      - ./app/database/migrations:/migrations
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "-database postgres://postgres:password@order-management-db:5432/order_management?sslmode=disable",
+        "down",
+      ]
+    depends_on:
+      - order-management-db
+
+volumes:
+  pgdata:
