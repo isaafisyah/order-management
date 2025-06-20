@@ -14,4 +14,4 @@ RUN go build -o main .
 
 EXPOSE 8080
 
-CMD ["/wait-for-it.sh", "order-management-postgres:5432", "--", "./main"]
+CMD ["/wait-for-it.sh", "order-management-db:5432", "--", "./main"]
