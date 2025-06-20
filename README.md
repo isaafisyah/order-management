@@ -14,6 +14,6 @@ App Order Management, dibuat dengan Golang.
 
 - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 - export PATH=$PATH:~/go/bin
-- migrate create -ext sql -dir app/database/migrations create_table_tableName
+- migrate create -ext sql -dir migrations create_table_tableName
 - docker-compose run migrate
 - docker-compose run migrate-down (untuk rollback)
