@@ -11,6 +11,7 @@ func Get() *Config {
 			Host:      os.Getenv("APP_HOST"),
 			Port:      os.Getenv("APP_PORT"),
 			SecretKey: os.Getenv("APP_SECRET_KEY"),
+			Env:       os.Getenv("APP_ENV"),
 		},
 		Database{
 			Host:     os.Getenv("DB_HOST"),

@@ -6,6 +6,7 @@ type Config struct {
 }
 
 type Server struct {
+	Env       string
 	Name      string
 	Host      string
 	Port      string
