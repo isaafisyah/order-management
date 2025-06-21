@@ -1,8 +1,7 @@
 package repository
 
 import (
-	"github.com/isaafisyah/order-management/app/domain/model"
-	"github.com/isaafisyah/order-management/app/domain/repository"
+	"github.com/isaafisyah/order-management/app/internal/user/model"
 	"gorm.io/gorm"
 )
 
@@ -10,7 +9,7 @@ type UserRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) repository.UserRepository {
+func NewUserRepository(db *gorm.DB) UserRepository {
 	return &UserRepositoryImpl{
 		db: db,
 	}
@@ -18,7 +17,7 @@ func NewUserRepository(db *gorm.DB) repository.UserRepository {
 
 func (r *UserRepositoryImpl) FindAll() ([]model.User, error) {
 	var users []model.User
-	err := r.db.Find(&users).Error
+	err := r.db.Select([]string{"id", "name", "email"}).Find(&users).Error
 	return users, err
 	
 }
@@ -29,10 +28,10 @@ func (r *UserRepositoryImpl) FindByID(id int) (model.User, error) {
 	return user, err
 }
 
-func (r *UserRepositoryImpl) FindByEmail(email string) (*model.User, error) {
+func (r *UserRepositoryImpl) FindByEmail(email string) (model.User, error) {
 	var user model.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	return &user, err
+	return user, err
 }
 
 func (r *UserRepositoryImpl) Create(user model.User) error {

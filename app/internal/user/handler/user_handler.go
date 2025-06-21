@@ -5,11 +5,12 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaafisyah/order-management/app/delivery/http/request"
-	"github.com/isaafisyah/order-management/app/delivery/http/validator"
-	"github.com/isaafisyah/order-management/app/domain/model"
-	"github.com/isaafisyah/order-management/app/domain/usecase"
+
+	"github.com/isaafisyah/order-management/app/internal/user/model"
+	"github.com/isaafisyah/order-management/app/internal/user/request"
+	"github.com/isaafisyah/order-management/app/internal/user/usecase"
 	"github.com/isaafisyah/order-management/app/utils/logger"
+	"github.com/isaafisyah/order-management/app/utils/validator"
 )
 
 type UserHandler struct {
@@ -54,14 +55,14 @@ func (c *UserHandler) FindByID(ctx *gin.Context) {
 	})
 }
 
-func (c *UserHandler) Create(ctx *gin.Context) {
-	logger.Log.Info("Create user")
+func (c *UserHandler) Register(ctx *gin.Context) {
+	logger.Log.Info("Register user")
 	var req request.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
-		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to create user")
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
 		return
 	}
 
@@ -69,7 +70,7 @@ func (c *UserHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
-		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to create user")
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
 		return
 	}
 
@@ -82,10 +83,43 @@ func (c *UserHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
-		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to create user")
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{
-		"message": "User created successfully",
+		"message": "User registered successfully",
+	})
+}
+
+func (c *UserHandler) Login(ctx *gin.Context)  {
+	logger.Log.Info("Login user")
+	var req request.LoginUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to login user")
+		return
+	}
+
+	if err := validator.ValidateStruct(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to login user")
+		return
+	}
+
+	token, err := c.UserUsecase.Login(req.Email, req.Password)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to login user")
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"token": token,
 	})
 }

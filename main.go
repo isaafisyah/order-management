@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/isaafisyah/order-management/app/config"
+	"github.com/isaafisyah/order-management/app/middleware"
 	"github.com/isaafisyah/order-management/app/routes"
 	"github.com/isaafisyah/order-management/app/utils/logger"
 )
@@ -20,8 +21,14 @@ func main()  {
 	r := gin.Default()
 	//logger
 	logger.InitLogger(cnf.Server.Env)
-	//route
-	routes.RegisterRoutes(db ,r)
+	//middleware
+	r.Use(
+		gin.Recovery(), //handle error panic
+		middleware.CorsMiddleware(),
+		middleware.AuthMiddleware(),
+	)
+	//route user
+	routes.UserRoutes(db, r)
 
 	//gin run
 	if err := r.Run(":" + cnf.Server.Port); err != nil {
