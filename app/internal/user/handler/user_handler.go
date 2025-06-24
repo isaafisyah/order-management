@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/isaafisyah/order-management/app/internal/user/model"
 	"github.com/isaafisyah/order-management/app/internal/user/request"
 	"github.com/isaafisyah/order-management/app/internal/user/usecase"
 	"github.com/isaafisyah/order-management/app/utils/logger"
@@ -66,20 +65,7 @@ func (c *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	if err := validator.ValidateStruct(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
-		return
-	}
-
-	user := model.User{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-	}
-	if err := c.UserUsecase.Create(user); err != nil {
+	if err := c.UserUsecase.Create(req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})

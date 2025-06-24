@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/isaafisyah/order-management/app/internal/user/model"
 	"gorm.io/gorm"
 )
@@ -31,6 +33,9 @@ func (r *UserRepositoryImpl) FindByID(id int) (model.User, error) {
 func (r *UserRepositoryImpl) FindByEmail(email string) (model.User, error) {
 	var user model.User
 	err := r.db.Where("email = ?", email).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return model.User{}, errors.New("user not found")
+	}
 	return user, err
 }
 

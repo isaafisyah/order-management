@@ -9,11 +9,10 @@ import (
 )
 
 func UserRoutes(db *gorm.DB,r *gin.Engine) {
-	userHandler := handler.NewUserHandler(usecase.NewUserUsecase(repository.NewUserRepository(db)))
+	userHandler := handler.NewUserHandler(usecase.NewUserUsecase(repository.NewUserRepository(db), usecase.NewAuthUsecase()))
 	prefixGroup := r.Group("/api/v1")
 	prefixGroup.GET("/users", userHandler.FindAll)
 	prefixGroup.POST("/register", userHandler.Register)
 	prefixGroup.POST("/login", userHandler.Login)
-	prefixGroup.GET("/user/:id", userHandler.FindByID)
-	
+	prefixGroup.GET("/user/:id", userHandler.FindByID)	
 }

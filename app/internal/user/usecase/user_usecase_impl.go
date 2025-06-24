@@ -2,25 +2,24 @@ package usecase
 
 import (
 	"errors"
-	"time"
+	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/isaafisyah/order-management/app/config"
 	"github.com/isaafisyah/order-management/app/internal/user/model"
 	"github.com/isaafisyah/order-management/app/internal/user/repository"
+	"github.com/isaafisyah/order-management/app/internal/user/request"
 	"github.com/isaafisyah/order-management/app/internal/user/response"
-
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
+	"github.com/isaafisyah/order-management/app/utils/logger"
+	"github.com/isaafisyah/order-management/app/utils/validator"
 )
 
 
 type UserUsecaseImpl struct {
 	UserRepository repository.UserRepository
+	authUseCase AuthUsecase
 }
 
-func NewUserUsecase(userRepository repository.UserRepository) UserUsecase {
-	return &UserUsecaseImpl{userRepository}
+func NewUserUsecase(userRepository repository.UserRepository, authUseCase AuthUsecase) UserUsecase {
+	return &UserUsecaseImpl{userRepository, authUseCase}
 }
 
 func (u *UserUsecaseImpl) FindAll() ([]response.UserResponse, error) {
@@ -44,25 +43,30 @@ func (u *UserUsecaseImpl) FindByEmail(email string) (response.UserResponse, erro
 	if err != nil {
 		return response.UserResponse{}, err
 	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return response.UserResponse{}, errors.New("user not found")
-	}
 	return response.ToUserResponse(data), nil
 }
 
-func (u *UserUsecaseImpl) Create(user model.User) error {
-	existEmail, _ := u.FindByEmail(user.Email)
-	if existEmail.ID != 0 {
-		return errors.New("email already exists")
+func (u *UserUsecaseImpl) Create(req request.CreateUserRequest) error {
+	if err := validator.ValidateStruct(&req); err != nil {
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
+		return fmt.Errorf("validation error: %w", err)
 	}
 
-	user.Password,_ = hashPassword(user.Password)
-	return u.UserRepository.Create(user)
-}
+	existEmail, _ := u.UserRepository.FindByEmail(req.Email)
+	if existEmail.ID != 0 {
+		err := errors.New("email already exists")
+		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
+		return err
+	}
 
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	return string(bytes), err
+	user := model.User{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	user.Password,_ = u.authUseCase.HashPassword(user.Password)
+	return u.UserRepository.Create(user)
 }
 
 func (u *UserUsecaseImpl) Login(email, password string) (*string, error) {
@@ -71,31 +75,13 @@ func (u *UserUsecaseImpl) Login(email, password string) (*string, error) {
 		return nil, errors.New("user not found")
 	}
 
-	if !checkPasswordHash(password, user.Password) {
+	if !u.authUseCase.CheckPasswordHash(password, user.Password) {
 		return nil, errors.New("invalid password")
 	}
 	
-	token, err := generateToken(user)
+	token, err := u.authUseCase.GenerateToken(user)
 	if err != nil {
 		return nil, errors.New("failed to generate token")
 	}
 	return &token, nil
-}
-
-func checkPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func generateToken(user model.User) (string, error) {
-	cnf := config.Get()
-	var secretKey = []byte(cnf.Server.SecretKey)
-
-	claims := jwt.MapClaims{
-		"authorized": true,
-		"user_id":    user.ID,
-		"exp":        time.Now().Add(time.Hour * 1).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secretKey)
 }
