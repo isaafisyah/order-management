@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/isaafisyah/order-management/app/utils/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -23,6 +24,7 @@ func InitDB(cnf *Config) (*gorm.DB, error) {
 	connection, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
+		logger.Log.WithField("Module", "DB").WithError(err).Error("Failed to connect to the database")
 		return nil, fmt.Errorf("failed to connect to the database: %w", err)
 	}
 
