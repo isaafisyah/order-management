@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/isaafisyah/order-management/app/internal/product/model"
 	"gorm.io/gorm"
 )
@@ -15,9 +17,9 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 	}
 }
 
-func (r *ProductRepositoryImpl) FindAll() ([]model.Product, error) {
+func (r *ProductRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, error) {
 	var products []model.Product
-	err := r.db.Find(&products).Error
+	err := r.db.WithContext(ctx).Find(&products).Error
 	return products, err
 }
 

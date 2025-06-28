@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 
 	"github.com/isaafisyah/order-management/app/internal/product/repository"
@@ -20,8 +21,8 @@ func NewProductUsecase(productRepository repository.ProductRepository) ProductUs
 	}
 }
 
-func (u *ProductUsecaseImpl) FindAll() ([]response.ProductResponse, error) {
-	products, _ := u.ProductRepository.FindAll()
+func (u *ProductUsecaseImpl) FindAll(ctx context.Context) ([]response.ProductResponse, error) {
+	products, _ := u.ProductRepository.FindAll(ctx)
 	return response.ToProductResponses(products), nil
 }
 

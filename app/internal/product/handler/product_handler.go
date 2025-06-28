@@ -22,7 +22,7 @@ func NewProductHandler(productUsecase usecase.ProductUsecase) ProductHandler {
 
 func (h *ProductHandler) FindAll(ctx *gin.Context) {
 	logger.Log.Info("Find all products")
-	users, err := h.ProductUsecase.FindAll()
+	users, err := h.ProductUsecase.FindAll(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
