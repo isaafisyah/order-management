@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -22,37 +23,40 @@ func NewUserUsecase(userRepository repository.UserRepository, authUseCase AuthUs
 	return &UserUsecaseImpl{userRepository, authUseCase}
 }
 
-func (u *UserUsecaseImpl) FindAll() ([]response.UserResponse, error) {
-	users, err := u.UserRepository.FindAll()
+func (u *UserUsecaseImpl) FindAll(ctx context.Context) ([]response.UserResponse, error) {
+	users, err := u.UserRepository.FindAll(ctx)
+	if errors.Is(err, context.DeadlineExceeded){
+		return nil, errors.New("timeout")
+	}
 	if err != nil {
 		return nil, err
 	}
 	return response.ToUserResponses(users), nil
 }
 
-func (u *UserUsecaseImpl) FindByID(id int) (response.UserResponse, error) {
-	user, err := u.UserRepository.FindByID(id)
+func (u *UserUsecaseImpl) FindByID(ctx context.Context, id int) (response.UserResponse, error) {
+	user, err := u.UserRepository.FindByID(ctx, id)
 	if err != nil {
 		return response.UserResponse{}, err
 	}
 	return response.ToUserResponse(user), nil
 }
 
-func (u *UserUsecaseImpl) FindByEmail(email string) (response.UserResponse, error) {
-	data, err := u.UserRepository.FindByEmail(email)
+func (u *UserUsecaseImpl) FindByEmail(ctx context.Context, email string) (response.UserResponse, error) {
+	data, err := u.UserRepository.FindByEmail(ctx, email)
 	if err != nil {
 		return response.UserResponse{}, err
 	}
 	return response.ToUserResponse(data), nil
 }
 
-func (u *UserUsecaseImpl) Create(req request.CreateUserRequest) error {
+func (u *UserUsecaseImpl) Create(ctx context.Context,req request.CreateUserRequest) error {
 	if err := validator.ValidateStruct(&req); err != nil {
 		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
 		return fmt.Errorf("validation error: %w", err)
 	}
 
-	existEmail, _ := u.UserRepository.FindByEmail(req.Email)
+	existEmail, _ := u.UserRepository.FindByEmail(ctx, req.Email)
 	if existEmail.ID != 0 {
 		err := errors.New("email already exists")
 		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to register user")
@@ -66,11 +70,11 @@ func (u *UserUsecaseImpl) Create(req request.CreateUserRequest) error {
 	}
 
 	user.Password,_ = u.authUseCase.HashPassword(user.Password)
-	return u.UserRepository.Create(user)
+	return u.UserRepository.Create(ctx, user)
 }
 
-func (u *UserUsecaseImpl) Login(email, password string) (*string, error) {
-	user, _ := u.UserRepository.FindByEmail(email)
+func (u *UserUsecaseImpl) Login(ctx context.Context, email, password string) (*string, error) {
+	user, _ := u.UserRepository.FindByEmail(ctx, email)
 	if user.ID == 0 {
 		return nil, errors.New("user not found")
 	}

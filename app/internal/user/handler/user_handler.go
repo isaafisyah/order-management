@@ -24,8 +24,16 @@ func NewUserHandler(userUsecase usecase.UserUsecase) UserHandler {
 
 func (c *UserHandler) FindAll(ctx *gin.Context) {
 	logger.Log.Info("Find all users")
-	users, err := c.UserUsecase.FindAll()
+	context := ctx.Request.Context()
+	users, err := c.UserUsecase.FindAll(context)
 	if err != nil {
+		if err.Error() == "timeout" {
+			ctx.JSON(http.StatusGatewayTimeout, gin.H{
+				"error": err.Error(),
+			})
+			logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to find all users")
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -41,7 +49,8 @@ func (c *UserHandler) FindByID(ctx *gin.Context) {
 	logger.Log.Info("Find user by id")
 	id := ctx.Param("id")
 	idInt, _ := strconv.Atoi(id)
-	user, err := c.UserUsecase.FindByID(idInt)
+	context := ctx.Request.Context()
+	user, err := c.UserUsecase.FindByID(context, idInt)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -56,6 +65,7 @@ func (c *UserHandler) FindByID(ctx *gin.Context) {
 
 func (c *UserHandler) Register(ctx *gin.Context) {
 	logger.Log.Info("Register user")
+	context := ctx.Request.Context()
 	var req request.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -65,7 +75,7 @@ func (c *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.UserUsecase.Create(req); err != nil {
+	if err := c.UserUsecase.Create(context, req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -95,8 +105,9 @@ func (c *UserHandler) Login(ctx *gin.Context)  {
 		logger.Log.WithField("Module", "UserHandler").WithError(err).Error("Failed to login user")
 		return
 	}
-
-	token, err := c.UserUsecase.Login(req.Email, req.Password)
+	
+	context := ctx.Request.Context()
+	token, err := c.UserUsecase.Login(context, req.Email, req.Password)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),

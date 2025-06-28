@@ -1,10 +1,14 @@
 package repository
 
-import "github.com/isaafisyah/order-management/app/internal/user/model"
+import (
+	"context"
+
+	"github.com/isaafisyah/order-management/app/internal/user/model"
+)
 
 type UserRepository interface{
-	FindAll() ([]model.User, error)
-	FindByID(id int) (model.User, error)
-	FindByEmail(email string) (model.User, error)
-	Create(user model.User) error
+	FindAll(ctx context.Context) ([]model.User, error)
+	FindByID(ctx context.Context, id int) (model.User, error)
+	FindByEmail(ctx context.Context, email string) (model.User, error)
+	Create(ctx context.Context, user model.User) error
 }
