@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/isaafisyah/order-management/app/config"
 	"github.com/isaafisyah/order-management/app/middleware"
@@ -24,6 +26,7 @@ func main()  {
 		gin.Recovery(), //handle error panic
 		middleware.CorsMiddleware(),
 		middleware.AuthMiddleware(),
+		middleware.TimeoutMiddleware(5 * time.Second),
 	)
 	//route user
 	routes.UserRoutes(db, r)
