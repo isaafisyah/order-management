@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"testing"
 
 	"github.com/isaafisyah/order-management/app/internal/user/model"
@@ -28,13 +29,13 @@ func TestCreateUserSuccess(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	mockRepo.On("FindByEmail", mock.Anything).Return(model.User{},nil)
+	mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(model.User{},nil)
 
 	mockAuthUsecase.On("HashPassword", req.Password).Return("hashedPassword", nil).Once()
 
-	mockRepo.On("Create", mock.AnythingOfType("model.User")).Return(nil).Once()
-
-	err = userUsecase.Create(req)
+	mockRepo.On("Create", context.Background(), mock.AnythingOfType("model.User")).Return(nil).Once()
+	ctx := context.Background()
+	err = userUsecase.Create(ctx,req)
 	assert.Nil(t, err)
 	
 	mockRepo.AssertExpectations(t)
@@ -52,8 +53,8 @@ func TestValidationFailed(t *testing.T) {
 		Email:    "fsdfa",
 		Password: "password123",
 	}
-
-	err := userUsecase.Create(req)
+	ctx := context.Background()
+	err := userUsecase.Create(ctx, req)
 	
 	assert.NotNil(t, err)
 }
@@ -70,14 +71,15 @@ func TestEmailExist(t *testing.T) {
 		Password: "password123",
 	}
 
-	mockRepo.On("FindByEmail", mock.Anything).Return(model.User{
+	mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(model.User{
 		ID:       1,
 		Name:     "John Doe",
 		Email:    "john.doe@example.com",
 		Password: "hashedPassword",
 	}, nil).Once()
 	
-	err := userUsecase.Create(req)
+	ctx := context.Background()
+	err := userUsecase.Create(ctx, req)
 	
 	assert.NotNil(t, err)
 	assert.EqualError(t, err, "email already exists")

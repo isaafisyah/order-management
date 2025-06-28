@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -26,8 +27,8 @@ func TestLoginSuccess(t *testing.T)  {
 	authUsecase.On("CheckPasswordHash", mock.Anything, mock.Anything).Return(true).Once()
 
 	authUsecase.On("GenerateToken", mock.Anything).Return("token", nil).Once()
-	
-	token, err := userUsecase.Login("john.doe@example.com", "password123")
+
+	token, err := userUsecase.Login(context.Background(), "john.doe@example.com", "password123")
 	
 	assert.Nil(t, err)
 	assert.NotNil(t, token)
@@ -40,7 +41,7 @@ func TestUserNotFoundFailed(t *testing.T)  {
 
 	mockRepo.On("FindByEmail", mock.Anything).Return(model.User{}, nil).Once()
 	
-	token, err := userUsecase.Login("john.doe@example.com", "password123")
+	token, err := userUsecase.Login(context.Background(), "john.doe@example.com", "password123")
 	
 	assert.NotNil(t, err)
 	assert.Nil(t, token)
@@ -52,7 +53,7 @@ func TestInvalidPasswordFailed(t *testing.T)  {
 	authUsecase := new(user.MockAuthUsecase)
 	userUsecase := usecase.NewUserUsecase(mockRepo, authUsecase)
 
-	mockRepo.On("FindByEmail", mock.Anything).Return(model.User{
+	mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(model.User{
 		ID:       1,
 		Name:     "John Doe",
 		Email:    "john.doe@example.com",
@@ -61,7 +62,7 @@ func TestInvalidPasswordFailed(t *testing.T)  {
 	
 	authUsecase.On("CheckPasswordHash", mock.Anything, mock.Anything).Return(false).Once()
 	
-	token, err := userUsecase.Login("john.doe@example.com", "password123")
+	token, err := userUsecase.Login(context.Background(), "john.doe@example.com", "password123")
 	
 	assert.NotNil(t, err)
 	assert.Nil(t, token)
@@ -73,7 +74,7 @@ func TestGenerateTokenFailed(t *testing.T)  {
 	authUsecase := new(user.MockAuthUsecase)
 	userUsecase := usecase.NewUserUsecase(mockRepo, authUsecase)
 
-	mockRepo.On("FindByEmail", mock.Anything).Return(model.User{
+	mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(model.User{
 		ID:       1,
 		Name:     "John Doe",
 		Email:    "john.doe@example.com",
@@ -85,7 +86,7 @@ func TestGenerateTokenFailed(t *testing.T)  {
 	error := errors.New("error generate token")
 	authUsecase.On("GenerateToken", mock.Anything).Return("", error).Once()
 	
-	token, err := userUsecase.Login("john.doe@example.com", "password123")
+	token, err := userUsecase.Login(context.Background(), "john.doe@example.com", "password123")
 	
 	assert.NotNil(t, err)
 	assert.Empty(t, token)
