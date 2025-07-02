@@ -75,3 +75,44 @@ func (h *ProductHandler) Create(ctx *gin.Context) {
 		"message": "Product created successfully",
 	})
 }
+
+func (h *ProductHandler) Update(ctx *gin.Context) {
+	logger.Log.Info("Update product")
+	var req request.UpdateProductRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		logger.Log.WithField("Module", "ProductHandler").WithError(err).Error("Failed to update product")
+		return
+	}
+
+	id,_ := strconv.Atoi(ctx.Param("id"))
+	if err := h.ProductUsecase.Update(id, req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		logger.Log.WithField("Module", "ProductHandler").WithError(err).Error("Failed to update product")
+		return
+	}
+	logger.Log.Info("Product updated successfully")
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Product updated successfully",
+	})
+}
+
+func (h *ProductHandler) Delete(ctx *gin.Context) {
+	logger.Log.Info("Delete product")
+	id,_ := strconv.Atoi(ctx.Param("id"))
+	if err := h.ProductUsecase.Delete(id); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		logger.Log.WithField("Module", "ProductHandler").WithError(err).Error("Failed to delete product")
+		return
+	}
+	logger.Log.Info("Product deleted successfully")
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Product deleted successfully",
+	})
+}

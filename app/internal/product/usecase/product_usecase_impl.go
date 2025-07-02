@@ -41,3 +41,23 @@ func (u *ProductUsecaseImpl) Create(req request.CreateProductRequest) error {
 	
 	return u.ProductRepository.Create(product)
 }
+
+func (u *ProductUsecaseImpl) Update(id int, req request.UpdateProductRequest) error {
+	if err := validator.ValidateStruct(&req); err != nil {
+		err = errors.New("validation error")
+		logger.Log.WithField("Module", "ProductService").WithError(err).Error("Failed to update product")
+		return err
+	}
+	product := request.UpdateToProduct(id, req)
+	return u.ProductRepository.Update(product)
+}
+
+func (u *ProductUsecaseImpl) Delete(id int) error {
+	product, _ := u.ProductRepository.FindByID(id)
+	if product.ID == 0 {
+		err := errors.New("product not found")
+		logger.Log.WithField("Module", "ProductService").WithError(err).Error("Failed to delete product")
+		return err
+	}
+	return u.ProductRepository.Delete(product)
+}

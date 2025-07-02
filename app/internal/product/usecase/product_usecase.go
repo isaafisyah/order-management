@@ -11,4 +11,6 @@ type ProductUsecase interface {
 	FindAll(ctx context.Context) ([]response.ProductResponse, error)
 	FindByID(id int) (response.ProductResponse, error)
 	Create(req request.CreateProductRequest) error
+	Update(id int, req request.UpdateProductRequest) error
+	Delete(id int) error
 }
