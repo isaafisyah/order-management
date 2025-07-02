@@ -14,4 +14,6 @@ func ProductRoutes(db *gorm.DB,r *gin.Engine) {
 	prefixGroup.GET("/products", productHandler.FindAll)
 	prefixGroup.POST("/product", productHandler.Create)
 	prefixGroup.GET("/product/:id", productHandler.FindByID)
+	prefixGroup.PUT("/product/:id", productHandler.Update)
+	prefixGroup.DELETE("/product/:id", productHandler.Delete)
 }
